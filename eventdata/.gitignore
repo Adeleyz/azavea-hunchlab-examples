@@ -1,0 +1,12 @@
+# ignore virtualenv
+bin
+include
+lib
+.Python
+
+# ignore .ini config files
+*.ini
+
+# ignore OS X files
+.DS_Store
+
