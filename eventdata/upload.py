@@ -66,7 +66,7 @@ def main():
             except:
                 print("exception on %s!" % option)
                 dict1[option] = None
-            return dict1
+        return dict1
 
     baseurl =  ConfigSectionMap("Server")['baseurl']
     csvendpoint = baseurl + '/api/dataservice/'
