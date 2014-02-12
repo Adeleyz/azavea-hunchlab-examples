@@ -29,12 +29,13 @@ def elapsedtime(start, current):
 
 ### Processing Status Values
 PROCESSING_STATUSES = 	{
-                'UP': 'Uploading File',
-                'UE': 'Error Uploading File',
-                'QU': 'In Queue for Processing',
-                'PR': 'Processing File',
-                'EP': 'Error Processing File',
-                'FP': 'Finished Processing File'
+                'SUBM': 'Submitted',
+                'PROC': 'Processing',
+                'COMP': 'Completed',
+                'FAIL': 'Failed',
+                'CANC': 'Canceled',
+                'TERM': 'Terminated',
+                'TIME': 'Timed Out'
             }
 
 
