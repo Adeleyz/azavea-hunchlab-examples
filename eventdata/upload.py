@@ -10,8 +10,19 @@ from optparse import OptionParser
 import ConfigParser
 
 
+### Processing Status Values
+PROCESSING_STATUSES = {
+    'SUBM': 'Submitted',
+    'PROC': 'Processing',
+    'COMP': 'Completed',
+    'FAIL': 'Failed',
+    'CANC': 'Canceled',
+    'TERM': 'Terminated',
+    'TIME': 'Timed Out'
+}
 
-### Token Authentication Class
+_START = time.time()
+
 
 class TokenAuth(AuthBase):
     """Attaches HTTP Token Authentication to the given Request object."""
@@ -24,64 +35,47 @@ class TokenAuth(AuthBase):
         r.headers['Authorization'] = 'Token ' + self.token
         return r
 
-def elapsedtime(start, current):
-    print 'Elapsed time: {0:.1f} minutes'.format((current - start) / 60)
 
-### Processing Status Values
-PROCESSING_STATUSES = 	{
-                'SUBM': 'Submitted',
-                'PROC': 'Processing',
-                'COMP': 'Completed',
-                'FAIL': 'Failed',
-                'CANC': 'Canceled',
-                'TERM': 'Terminated',
-                'TIME': 'Timed Out'
-            }
+def _print_elapsed_time():
+    print('Elapsed time: {0:.1f} minutes'.format((time.time() - _START) / 60))
 
+def _config_section_map(config, section):
+    result = {}
+    options = config.options(section)
+    for option in options:
+        try:
+            result[option] = config.get(section, option)
+            if result[option] == -1:
+                print('skip: %s' % option)
+        except Exception:
+            print('exception on %s!' % option)
+            result[option] = None
+    return result
 
 def main():
-    usage = "usage: %prog [options] csvfile"
+    usage = 'usage: %prog [options] csvfile'
     parser = OptionParser(usage=usage)
-    parser.add_option("-c", "--config", default="config.ini", dest="config",
-                      help="Configuration file", metavar="FILE")
+    parser.add_option('-c', '--config', default='config.ini', dest='config',
+                      help='Configuration file', metavar='FILE')
 
-    (options, args) = parser.parse_args()
+    options, args = parser.parse_args()
 
     if len(args) != 1:
-        parser.error("incorrect number of arguments")
+        parser.error('incorrect number of arguments')
     else:
         csvfile = args[0]
 
     ### Read Configuration
-    Config = ConfigParser.ConfigParser()
-    Config.read(options.config)
+    config = ConfigParser.ConfigParser()
+    config.read(options.config)
+    server = _config_section_map(config, 'Server')
 
-    def ConfigSectionMap(section):
-        dict1 = {}
-        options = Config.options(section)
-        for option in options:
-            try:
-                dict1[option] = Config.get(section, option)
-                if dict1[option] == -1:
-                    DebugPrint("skip: %s" % option)
-            except:
-                print("exception on %s!" % option)
-                dict1[option] = None
-        return dict1
-
-    baseurl =  ConfigSectionMap("Server")['baseurl']
+    baseurl = server['baseurl']
     csvendpoint = baseurl + '/api/dataservice/'
-    certificate =  ConfigSectionMap("Server")['certificateauthority']
-    token =  ConfigSectionMap("Server")['token']
-
-
-
-    ### Process File
-    time_start = time.time()
+    certificate = server['certificateauthority']
+    token = server['token']
 
     print 'Uploading data to: {0}'.format(csvendpoint)
-
-    files = {'file': open(csvfile, 'rb')}
 
     # setup session to reuse authentication and verify the SSL certificate properly
     s = requests.Session()
@@ -89,48 +83,42 @@ def main():
     s.verify = certificate
 
     # post the csv file to HunchLab
-    p = s.post(csvendpoint, files=files)
+    with open(csvfile, 'rb') as f:
+        csv_response = s.post(csvendpoint, files={'file': f})
 
-    if p.status_code == 401:
+    if csv_response.status_code == 401:
         print 'Authentication token not accepted.'
         sys.exit(1)
-    elif p.status_code != 202:
+    elif csv_response.status_code != 202:
         print 'Other error. Did not receive a 202 HTTP response to the upload'
-        sys.exit(1)
+        sys.exit(2)
 
-    time_upload_complete = time.time()
-    elapsedtime(time_start, time_upload_complete)
+    _print_elapsed_time()
 
-
-    upload_result = p.json()
-
+    upload_result = csv_response.json()
     import_job_id = upload_result['import_job_id']
 
     print 'Import Job ID: {0}'.format(import_job_id)
 
-    upload_status = s.get(csvendpoint + import_job_id)
-
     # while in progress continue polling
+    upload_status = s.get(csvendpoint + import_job_id)
     while upload_status.status_code == 202:
         print "Status of poll: {0}".format(upload_status.status_code)
+        print 'Upload Status: {0}'.format(
+            PROCESSING_STATUSES[str(upload_status.json()['processing_status'])])
 
-        upload_status_value = upload_status.json()['processing_status']
-        print 'Upload Status: {0}'.format(PROCESSING_STATUSES[str(upload_status.json()['processing_status'])])
-
-        elapsedtime(time_start, time.time())
-
+        _print_elapsed_time()
         time.sleep(15)
-
         upload_status = s.get(csvendpoint + import_job_id)
 
     print "HTTP status of poll: {0}".format(upload_status.status_code)
-    print 'Final Upload Status: {0}'.format(PROCESSING_STATUSES[str(upload_status.json()['processing_status'])])
+    print 'Final Upload Status: {0}'.format(
+        PROCESSING_STATUSES[str(upload_status.json()['processing_status'])])
 
     print 'Log: '
     print upload_status.json()['log']
 
-    time_processing_complete = time.time()
-    elapsedtime(time_start, time_processing_complete)
+    _print_elapsed_time()
 
 
 if __name__ == "__main__":
