@@ -1,4 +1,4 @@
-pyasn1-modules
-ndg-httpsclient
-pyopenssl
-requests
+pyasn1-modules==0.0.5
+ndg-httpsclient==0.3.2
+pyOpenSSL==0.14
+requests==2.2.1
