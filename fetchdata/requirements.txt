@@ -1,2 +1,2 @@
-requests
-pytz
+requests==2.2.1
+pytz==2014.1.1
