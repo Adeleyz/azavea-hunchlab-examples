@@ -37,3 +37,6 @@ nosetests.xml
 
 # ignore OS X files
 .DS_Store
+
+# ignore temp files
+*~
