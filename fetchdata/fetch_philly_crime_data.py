@@ -187,8 +187,7 @@ class PhillyUploader():
         with open(self.OUTPUT_FILENAME, 'wb') as outf:
             wtr = csv.DictWriter(outf, self._OUT_FIELDS, extrasaction='ignore')
 
-            sys.stdout.write('Converting downloaded incidents json to csv...')
-            sys.stdout.flush()
+            logging.info('Converting downloaded incidents json to csv...')
 
             wtr.writeheader()
 
@@ -220,18 +219,12 @@ class PhillyUploader():
     def download_latest_csv_zipfile(self):
         """Download latest incident zipfile; return true if successful."""
         bad_download = True
-        sys.stdout.write('Downloading file...')
-        sys.stdout.flush()
+        logging.info('Downloading file...')
         stream = requests.get(self._DOWNLOAD_URL, stream=True, timeout=20)
         if stream.ok:
             with open(self._DOWNLOAD_FILENAME, 'wb') as stream_file:
-                chunk_ct = 0
                 for chunk in stream.iter_content():
                     stream_file.write(chunk)
-                    chunk_ct += 1
-                    if chunk_ct % 50000 == 0:
-                        sys.stdout.write('.')
-                        sys.stdout.flush()
 
             if zipfile.is_zipfile(self._DOWNLOAD_FILENAME):
                 with zipfile.ZipFile(self._DOWNLOAD_FILENAME) as z:
@@ -276,9 +269,7 @@ class PhillyUploader():
             rdr = csv.DictReader(inf)
             wtr = csv.DictWriter(outf, self._OUT_FIELDS, extrasaction='ignore')
 
-            sys.stdout.write('Converting CSV file contents...')
-            sys.stdout.flush()
-
+            logging.info('Converting CSV file contents...')
             wtr.writeheader()
 
             # count rows, and rows with unusable data
@@ -352,10 +343,6 @@ class PhillyUploader():
         outln['address'] = row['LOCATION_BLOCK']
         outln['last_updated'] = str(self.last_updated)
         outln['datasource'] = self._DOWNLOAD_URL
-
-        if self.row_ct % 5000 == 0:
-            sys.stdout.write('.')
-            sys.stdout.flush()
 
         return outln
 
