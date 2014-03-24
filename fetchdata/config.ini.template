@@ -1,0 +1,4 @@
+[Server]
+BaseURL: https://us.hunchlab.com
+CertificateAuthority: ../eventdata/certificates/equifaxroot.pem
+Token: YOURTOKEN
