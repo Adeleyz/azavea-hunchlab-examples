@@ -361,7 +361,6 @@ class PhillyUploader():
             sys.stdout.write('.')
             sys.stdout.flush()
 
-        print(outln)
         return outln
 
 
