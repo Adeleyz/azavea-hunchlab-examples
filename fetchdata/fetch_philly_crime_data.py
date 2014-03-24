@@ -4,6 +4,7 @@ from argparse import ArgumentParser
 import csv
 from datetime import datetime, timedelta
 import locale
+import logging
 import os
 import pickle
 import subprocess
@@ -69,25 +70,26 @@ class PhillyUploader():
                     try:
                         self.last_check = got_last_check['last_check']
                         self.since_last_check = datetime.now() - self.last_check
-                        print("Loaded last time check: ")
-                        print(self.last_check)
-                        print(str(self.since_last_check.days) + " days since last check.")
+                        logging.info("Loaded last time check: ")
+                        logging.info(self.last_check)
+                        logging.info(str(self.since_last_check.days) + " days since last check.")
                         if self.since_last_check < timedelta(days=30):
-                            print('Last check was less than 30 days ago.  ' + \
+                            logging.info('Last check was less than 30 days ago.  ' + \
                                 'Fetching from ArcGIS.')
                             get_csv = False
                         else:
-                            print('Last check was more than 30 days ago.  Fetching full CSV.')
+                            logging.info('Last check was more than 30 days ago.  ' + \
+                                'Fetching full CSV.')
                     except:
-                        print("Couldn't read last time check value.  Fetching full CSV")
+                        logging.warning("Couldn't read last time check value.  Fetching full CSV")
                 else:
-                    print("Couldn't read time of last check.  Fetching full CSV.")
+                    logging.warning("Couldn't read time of last check.  Fetching full CSV.")
             except:
-                print("Error opening last_check.p file.  Fetching full CSV.")
+                logging.warning("Error opening last_check.p file.  Fetching full CSV.")
         else:
-            print("Couldn't find last_check.p file in local directory.")
-            print('(This may be the first time this script has been run.)')
-            print('Fetching full CSV.')
+            logging.info("Couldn't find last_check.p file in local directory.")
+            logging.info('(This may be the first time this script has been run.)')
+            logging.info('Fetching full CSV.')
 
         return get_csv
 
@@ -110,41 +112,41 @@ class PhillyUploader():
             got_new_data = self.get_csv()
         else:
             # fetch json from ArcGIS for the days since the last check
-            print('Fetching incident data for the last ' +
+            logging.info('Fetching incident data for the last ' +
                 str(self.since_last_check.days + 1) + ' days.')
             got_new_data = self.fetch_from_arcgis(self.since_last_check.days + 1)
 
         if got_new_data:
             if self.row_ct > 0:
-                print('\n\nAll done making CSV for HunchLab!')
-                print('Wrote ' + locale.format("%d", self.row_ct - self.bad_row_ct,
+                logging.info('\n\nAll done making CSV for HunchLab!')
+                logging.info('Wrote ' + locale.format("%d", self.row_ct - self.bad_row_ct,
                     grouping=True) + ' rows.')
-                print('Encountered ' + locale.format("%d", self.bad_row_ct,
+                logging.info('Encountered ' + locale.format("%d", self.bad_row_ct,
                     grouping=True) + ' rows that cannot be used.')
 
                 if self.bad_row_ct > 0:
-                    print('\tOf those, ' + locale.format("%d", self.missing_coords_ct,
+                    logging.info('\tOf those, ' + locale.format("%d", self.missing_coords_ct,
                         grouping=True) + ' are missing co-ordinates,')
-                    print('\t' + locale.format("%d", self.non_numeric_ct,
+                    logging.info('\t' + locale.format("%d", self.non_numeric_ct,
                         grouping=True) + ' have non-numeric values for co-ordinates,')
-                    print('\tand ' + locale.format("%d", self.bad_dt_ct,
+                    logging.info('\tand ' + locale.format("%d", self.bad_dt_ct,
                         grouping=True) + ' have unrecognized values for the dispatch date/time.')
 
-                print('\nOutput written to CSV file ' + self.OUTPUT_FILENAME + '.')
+                logging.info('\nOutput written to CSV file ' + self.OUTPUT_FILENAME + '.')
 
                 # write time check file
                 with open(self.last_check_path, 'wb') as last_check_file:
                     pickle.dump({'last_check': datetime.now()}, last_check_file)
 
-                print('Wrote last check time to file last_check.p.')
+                logging.info('Wrote last check time to file last_check.p.')
 
                 return True  # success!
             else:
-                print('\n\nAll done fetching data.\nNo new data found.')
+                logging.warning('\n\nAll done fetching data.\nNo new data found.')
                 return False  # nothing to upload
 
         else:
-            print('\n\nEncountered error fetching data.\nData fetch failed.')
+            logging.error('\n\nEncountered error fetching data.\nData fetch failed.')
             return False
 
     def fetch_from_arcgis(self, num_days):
@@ -159,7 +161,7 @@ class PhillyUploader():
             if num_days > 30:
                 raise Exception('Number of days to fetch from ArcGIS must be <= 30.')
         except:
-            print('Got invalid value ' + str(num_days) + ' for number of days to fetch.')
+            logging.error('Got invalid value ' + str(num_days) + ' for number of days to fetch.')
             return False  # bail
 
         where_clause = 'DISPATCH_DATE_TIME > SYSDATE - ' + str(num_days)
@@ -170,18 +172,17 @@ class PhillyUploader():
             'f': 'pjson'
         }
 
-        print('Fetching recent incidents...')
+        logging.info('Fetching recent incidents...')
         r = requests.get(self._ARCGIS_URL, params=arcgis_params, timeout=20)
 
         if not r.ok:
-            print('ArcGIS server returned status code: ' + str(r.status_code))
-            print(r.text)
+            logging.error('ArcGIS server returned status code: ' + str(r.status_code))
+            logging.debug(r.text)
             return False
 
-        print('Got recent incidents.  Converting...')
+        logging.info('Got recent incidents.  Converting...')
         features = r.json().get('features')
-        print("Using date last updated:")
-        print(str(self.last_updated))
+        logging.info('Using date last updated: ' + str(self.last_updated))
 
         with open(self.OUTPUT_FILENAME, 'wb') as outf:
             wtr = csv.DictWriter(outf, self._OUT_FIELDS, extrasaction='ignore')
@@ -211,7 +212,7 @@ class PhillyUploader():
                     if outln:
                         wtr.writerow(outln)
                 except:
-                    print('Could not process ArcGIS data.')
+                    logging.error('Could not process ArcGIS data.')
                     return False
 
         return True
@@ -242,10 +243,10 @@ class PhillyUploader():
                     bad_download = False
 
         if bad_download:
-            print('\nFailed to download ' + self._DOWNLOAD_URL + '.')
+            logging.error('\nFailed to download ' + self._DOWNLOAD_URL + '.')
             return False
         else:
-            print('\nDownload complete.')
+            logging.info('\nDownload complete.')
             return True
 
     def get_csv(self):
@@ -253,12 +254,11 @@ class PhillyUploader():
         if not self.download_latest_csv_zipfile():
             return False
 
-        print('Checking last date updated...')
+        logging.info('Checking last date updated...')
         with open(self._UPDATED_DATE_FILENAME, 'rb') as inf_update:
             updated_str = inf_update.read().strip()
 
-        print("Last updated file contents:")
-        print(updated_str)
+        logging.info('Last updated file contents: ' + updated_str)
 
         try:
             # date is at end of single line in UPDATE_DATE.txt
@@ -267,11 +267,10 @@ class PhillyUploader():
             updated_dt = datetime.strptime(updated_dt_str, self._LAST_UPDATED_DT_FORMAT)
             self.last_updated = self.tz.localize(updated_dt)
         except:
-            print("Failed to extract date last updated.  Using today.")
+            logging.info('Failed to extract date last updated.  Using today.')
             self.last_updated = self.tz.localize(datetime.today())
 
-        print("Using date last updated:")
-        print(self.last_updated)
+        logging.info('Using date last updated: ' + self.last_updated)
 
         with open(self._INPUT_FILENAME, 'rb') as inf, open(self.OUTPUT_FILENAME, 'wb') as outf:
             rdr = csv.DictReader(inf)
@@ -294,7 +293,7 @@ class PhillyUploader():
                 try:
                     outln = self.process_row(ln, from_arcgis=False)
                 except:
-                    print('Could not process CSV data.')
+                    logging.error('Could not process CSV data.')
                     return False
 
                 if outln:
@@ -369,44 +368,51 @@ def main():
     eventdata_dir = os.path.join(parent_dir, 'eventdata')
     default_config = os.path.join(os.getcwd(), 'config.ini')
     parser.add_argument('-c', '--config', default=default_config, dest='config',
-                      help='Configuration file for upload.py script', metavar='FILE')
+                        help='Configuration file for upload.py script', metavar='FILE')
     parser.add_argument('-f', '--full-csv', default=False, dest='full_csv',
-                      action="store_true", help='Get full CSV of all incidents')
+                        action="store_true", help='Get full CSV of all incidents')
     parser.add_argument('-n', '--no-upload', default=False, dest='no_upload',
-                      action="store_true", help='Only download data (skip upload to HunchLab)')
+                        action="store_true", help='Only download data (skip upload to HunchLab)')
+    parser.add_argument('-l', '--log-level', default='INFO', dest='log_level',
+                        help='Log level for output.',
+                        choices=['debug', 'info', 'warning', 'error', 'critical'])
 
     args = parser.parse_args()
+
+    # set up logger
+    loglvl = getattr(logging, args.log_level.upper())
+    logging.basicConfig(filename='fetch_philly_crime_data.log', level=loglvl)
 
     try:
         p = PhillyUploader()
         if not p.fetch_latest(args.full_csv):
             raise Exception('Could not fetch Philadelphia incident data.')
     except:
-        print('\nDid not get data for HunchLab.\nExiting.')
+        logging.error('\nDid not get data for HunchLab.\nExiting.')
         return  1  # data fetch either failed or didn't get anything new
 
     if not args.no_upload:
         # do upload, too.  script is in ../eventdata/
         script_path = os.path.join(eventdata_dir, 'upload.py')
         if not os.path.isfile(script_path):
-            print("\nCouldn't find upload.py script.")
-            print('\nNot uploading CSV to HunchLab.\nExiting.')
+            logging.error("\nCouldn't find upload.py script.")
+            logging.error('\nNot uploading CSV to HunchLab.\nExiting.')
             return 1
         elif not os.path.isfile(args.config):
-            print("\nCouldn't find config.ini for uploader script.")
-            print('\nNot uploading CSV to HunchLab.\nExiting.')
+            logging.error("\nCouldn't find config.ini for uploader script.")
+            logging.info('\nNot uploading CSV to HunchLab.\nExiting.')
             return 1
 
-        print('\nUploading data to HunchLab now.')
+        logging.info('\nUploading data to HunchLab now.')
         if not subprocess.call(['python', script_path, '-c', args.config,
             PhillyUploader.OUTPUT_FILENAME]):
 
-            print('\n\nUpload to HunchLab complete.\nAll done!')
+            logging.info('\n\nUpload to HunchLab complete.\nAll done!')
         else:
-            print('\n\nUpload to HunchLab failed.\nExiting.')
+            logging.error('\n\nUpload to HunchLab failed.\nExiting.')
             return 1
     else:
-        print('\nNot uploading CSV to HunchLab.\nAll done!')
+        logging.info('\nNot uploading CSV to HunchLab.\nAll done!')
 
 if __name__ == '__main__':
     """If run from the command line."""
