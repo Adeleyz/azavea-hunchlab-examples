@@ -156,12 +156,9 @@ class PhillyUploader():
         # verify got valid argument
         try:
             num_days = float(num_days)
-            if num_days <= 30:
-                good_num_days = True
+            if num_days > 30:
+                raise Exception("Number of days to fetch from ArcGIS must be <= 30.')
         except:
-            good_num_days = False
-
-        if not good_num_days:
             print('Got invalid value ' + str(num_days) + ' for number of days to fetch.')
             return False  # bail
 
