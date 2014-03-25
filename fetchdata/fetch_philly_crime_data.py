@@ -125,7 +125,7 @@ class PhillyUploader():
                               locale.format("%d", self.bad_row_ct, grouping=True))
 
                 if self.bad_row_ct > 0:
-                    logging.info('Of those, %S are missing co-ordinates,',
+                    logging.info('Of those, %s are missing co-ordinates,',
                                  locale.format("%d", self.missing_coords_ct, grouping=True))
                     logging.info('%s have non-numeric values for co-ordinates,',
                                  locale.format("%d", self.non_numeric_ct, grouping=True))

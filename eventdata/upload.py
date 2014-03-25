@@ -125,13 +125,13 @@ def main():
     upload_result = csv_response.json()
     import_job_id = upload_result['import_job_id']
 
-    logging.info('Import Job ID: %d', import_job_id)
+    logging.info('Import Job ID: %s', import_job_id)
 
     # while in progress continue polling
     upload_status = s.get(csvendpoint + import_job_id)
     while upload_status.status_code == 202:
         logging.info("Status of poll: %d", upload_status.status_code)
-        logging.info('Upload Status: %d',
+        logging.info('Upload Status: %s',
             PROCESSING_STATUSES[str(upload_status.json()['processing_status'])])
 
         _print_elapsed_time()
@@ -140,7 +140,7 @@ def main():
 
     final_status = PROCESSING_STATUSES[str(upload_status.json()['processing_status'])]
     logging.info("HTTP status of poll: %d", upload_status.status_code)
-    logging.info('Final Upload Status: %d', final_status)
+    logging.info('Final Upload Status: %s', final_status)
 
     logging.info('Log: ')
     logging.info(upload_status.json()['log'])
