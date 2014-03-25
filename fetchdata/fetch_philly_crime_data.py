@@ -118,35 +118,33 @@ class PhillyUploader():
 
         if got_new_data:
             if self.row_ct > 0:
-                logging.info('\n\nAll done making CSV for HunchLab!')
+                logging.info('All done making CSV for HunchLab!')
                 logging.info('Wrote ' + locale.format("%d", self.row_ct - self.bad_row_ct,
                     grouping=True) + ' rows.')
                 logging.info('Encountered ' + locale.format("%d", self.bad_row_ct,
                     grouping=True) + ' rows that cannot be used.')
 
                 if self.bad_row_ct > 0:
-                    logging.info('\tOf those, ' + locale.format("%d", self.missing_coords_ct,
+                    logging.info('Of those, ' + locale.format("%d", self.missing_coords_ct,
                         grouping=True) + ' are missing co-ordinates,')
-                    logging.info('\t' + locale.format("%d", self.non_numeric_ct,
+                    logging.info(locale.format("%d", self.non_numeric_ct,
                         grouping=True) + ' have non-numeric values for co-ordinates,')
-                    logging.info('\tand ' + locale.format("%d", self.bad_dt_ct,
+                    logging.info('and ' + locale.format("%d", self.bad_dt_ct,
                         grouping=True) + ' have unrecognized values for the dispatch date/time.')
 
-                logging.info('\nOutput written to CSV file ' + self.OUTPUT_FILENAME + '.')
+                logging.info('Output written to CSV file ' + self.OUTPUT_FILENAME + '.')
 
                 # write time check file
                 with open(self.last_check_path, 'wb') as last_check_file:
                     pickle.dump({'last_check': datetime.now()}, last_check_file)
 
                 logging.info('Wrote last check time to file last_check.p.')
-
                 return True  # success!
             else:
-                logging.warning('\n\nAll done fetching data.\nNo new data found.')
+                logging.warning('All done fetching data.  No new data found.')
                 return False  # nothing to upload
-
         else:
-            logging.error('\n\nEncountered error fetching data.\nData fetch failed.')
+            logging.error('Encountered error fetching data.  Data fetch failed.')
             return False
 
     def fetch_from_arcgis(self, num_days):
@@ -207,7 +205,6 @@ class PhillyUploader():
 
                 try:
                     outln = self.process_row(inln, from_arcgis=True)
-
                     if outln:
                         wtr.writerow(outln)
                 except:
@@ -236,10 +233,10 @@ class PhillyUploader():
                     bad_download = False
 
         if bad_download:
-            logging.error('\nFailed to download ' + self._DOWNLOAD_URL + '.')
+            logging.error('Failed to download ' + self._DOWNLOAD_URL + '.')
             return False
         else:
-            logging.info('\nDownload complete.')
+            logging.info('Download complete.')
             return True
 
     def get_csv(self):
@@ -360,46 +357,54 @@ def main():
                         action="store_true", help='Get full CSV of all incidents')
     parser.add_argument('-n', '--no-upload', default=False, dest='no_upload',
                         action="store_true", help='Only download data (skip upload to HunchLab)')
-    parser.add_argument('-l', '--log-level', default='INFO', dest='log_level',
-                        help='Log level for output.',
+    parser.add_argument('-l', '--log-level', default='info', dest='log_level',
+                        help="Log level for console output.  Defaults to 'info'.",
                         choices=['debug', 'info', 'warning', 'error', 'critical'])
 
     args = parser.parse_args()
 
-    # set up logger
+    # set up file logger
+    logging.basicConfig(filename='fetch_philly_crime_data.log', level=logging.DEBUG,
+                        format='%(asctime)s %(levelname)s: %(message)s',
+                        datefmt='%Y-%m-%d %I:%M:%S %p')
+    
+    # add logger handler for console output
+    console = logging.StreamHandler()
     loglvl = getattr(logging, args.log_level.upper())
-    logging.basicConfig(filename='fetch_philly_crime_data.log', level=loglvl)
+    console.setLevel(loglvl)
+    # add the handler to the root logger
+    logging.getLogger('').addHandler(console)
 
     try:
         p = PhillyUploader()
         if not p.fetch_latest(args.full_csv):
             raise Exception('Could not fetch Philadelphia incident data.')
     except:
-        logging.error('\nDid not get data for HunchLab.\nExiting.')
+        logging.error('Did not get data for HunchLab.  Exiting.')
         return  1  # data fetch either failed or didn't get anything new
 
     if not args.no_upload:
         # do upload, too.  script is in ../eventdata/
         script_path = os.path.join(eventdata_dir, 'upload.py')
         if not os.path.isfile(script_path):
-            logging.error("\nCouldn't find upload.py script.")
-            logging.error('\nNot uploading CSV to HunchLab.\nExiting.')
-            return 1
+            logging.error("Couldn't find upload.py script.")
+            logging.error('Not uploading CSV to HunchLab.  Exiting.')
+            sys.exit(2)
         elif not os.path.isfile(args.config):
-            logging.error("\nCouldn't find config.ini for uploader script.")
-            logging.info('\nNot uploading CSV to HunchLab.\nExiting.')
-            return 1
+            logging.error("Couldn't find config.ini for uploader script.")
+            logging.info('Not uploading CSV to HunchLab.  Exiting.')
+            sys.exit(3)
 
-        logging.info('\nUploading data to HunchLab now.')
+        logging.info('Uploading data to HunchLab now.')
         if not subprocess.call(['python', script_path, '-c', args.config,
-            PhillyUploader.OUTPUT_FILENAME]):
+            '-l', args.log_level, PhillyUploader.OUTPUT_FILENAME]):
 
-            logging.info('\n\nUpload to HunchLab complete.\nAll done!')
+            logging.info('Upload to HunchLab complete.  All done!')
         else:
-            logging.error('\n\nUpload to HunchLab failed.\nExiting.')
-            return 1
+            logging.error('Upload to HunchLab failed.  Exiting.')
+            sys.exit(1)
     else:
-        logging.info('\nNot uploading CSV to HunchLab.\nAll done!')
+        logging.info('Not uploading CSV to HunchLab.  All done!')
 
 if __name__ == '__main__':
     """If run from the command line."""
