@@ -112,27 +112,27 @@ class PhillyUploader():
             got_new_data = self.get_csv()
         else:
             # fetch json from ArcGIS for the days since the last check
-            logging.info('Fetching incident data for the last ' +
-                str(self.since_last_check.days + 1) + ' days.')
-            got_new_data = self.fetch_from_arcgis(self.since_last_check.days + 1)
+            get_days = self.since_last_check.days + 1
+            logging.info('Fetching incident data for the last %d days.', get_days)
+            got_new_data = self.fetch_from_arcgis(get_days)
 
         if got_new_data:
             if self.row_ct > 0:
                 logging.info('All done making CSV for HunchLab!')
-                logging.info('Wrote ' + locale.format("%d", self.row_ct - self.bad_row_ct,
-                    grouping=True) + ' rows.')
-                logging.info('Encountered ' + locale.format("%d", self.bad_row_ct,
-                    grouping=True) + ' rows that cannot be used.')
+                logging.info('Wrote %s rows.', locale.format("%d",
+                             self.row_ct - self.bad_row_ct, grouping=True))
+                logging.info('Encountered %s rows that cannot be used.',
+                              locale.format("%d", self.bad_row_ct, grouping=True))
 
                 if self.bad_row_ct > 0:
-                    logging.info('Of those, ' + locale.format("%d", self.missing_coords_ct,
-                        grouping=True) + ' are missing co-ordinates,')
-                    logging.info(locale.format("%d", self.non_numeric_ct,
-                        grouping=True) + ' have non-numeric values for co-ordinates,')
-                    logging.info('and ' + locale.format("%d", self.bad_dt_ct,
-                        grouping=True) + ' have unrecognized values for the dispatch date/time.')
+                    logging.info('Of those, %S are missing co-ordinates,',
+                                 locale.format("%d", self.missing_coords_ct, grouping=True))
+                    logging.info('%s have non-numeric values for co-ordinates,',
+                                 locale.format("%d", self.non_numeric_ct, grouping=True))
+                    logging.info('and %s have unrecognized values for the dispatch date/time.',
+                                 locale.format("%d", self.bad_dt_ct, grouping=True))
 
-                logging.info('Output written to CSV file ' + self.OUTPUT_FILENAME + '.')
+                logging.info('Output written to CSV file %s.', self.OUTPUT_FILENAME)
 
                 # write time check file
                 with open(self.last_check_path, 'wb') as last_check_file:
@@ -159,7 +159,7 @@ class PhillyUploader():
             if num_days > 30:
                 raise Exception('Number of days to fetch from ArcGIS must be <= 30.')
         except:
-            logging.error('Got invalid value ' + str(num_days) + ' for number of days to fetch.')
+            logging.error('Got invalid value %d for number of days to fetch.', num_days)
             return False  # bail
 
         where_clause = 'DISPATCH_DATE_TIME > SYSDATE - ' + str(num_days)
@@ -174,13 +174,13 @@ class PhillyUploader():
         r = requests.get(self._ARCGIS_URL, params=arcgis_params, timeout=20)
 
         if not r.ok:
-            logging.error('ArcGIS server returned status code: ' + str(r.status_code))
-            logging.debug(r.text)
+            logging.error('ArcGIS server returned status code: %d', r.status_code)
+            logging.debug('ArcGIS response:  %s', r.text)
             return False
 
         logging.info('Got recent incidents.  Converting...')
         features = r.json().get('features')
-        logging.info('Using date last updated: ' + str(self.last_updated))
+        logging.info('Using date last updated: %s', str(self.last_updated))
 
         with open(self.OUTPUT_FILENAME, 'wb') as outf:
             wtr = csv.DictWriter(outf, self._OUT_FIELDS, extrasaction='ignore')
@@ -233,7 +233,7 @@ class PhillyUploader():
                     bad_download = False
 
         if bad_download:
-            logging.error('Failed to download ' + self._DOWNLOAD_URL + '.')
+            logging.error('Failed to download %s.', self._DOWNLOAD_URL)
             return False
         else:
             logging.info('Download complete.')
@@ -248,7 +248,7 @@ class PhillyUploader():
         with open(self._UPDATED_DATE_FILENAME, 'rb') as inf_update:
             updated_str = inf_update.read().strip()
 
-        logging.info('Last updated file contents: ' + updated_str)
+        logging.info('Last updated file contents: %s', updated_str)
 
         try:
             # date is at end of single line in UPDATE_DATE.txt
@@ -260,7 +260,7 @@ class PhillyUploader():
             logging.info('Failed to extract date last updated.  Using today.')
             self.last_updated = self.tz.localize(datetime.today())
 
-        logging.info('Using date last updated: ' + self.last_updated)
+        logging.info('Using date last updated: %s', self.last_updated)
 
         with open(self._INPUT_FILENAME, 'rb') as inf, open(self.OUTPUT_FILENAME, 'wb') as outf:
             rdr = csv.DictReader(inf)

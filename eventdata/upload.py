@@ -51,9 +51,9 @@ def _config_section_map(config, section):
         try:
             result[option] = config.get(section, option)
             if result[option] == -1:
-                logging.info('skip: %s' % option)
+                logging.info('skip: %s', option)
         except Exception:
-            logging.error('exception on %s!' % option)
+            logging.error('exception on %s!', option)
             result[option] = None
     return result
 
@@ -84,7 +84,7 @@ def main():
 
     ### Read Configuration
     if not os.path.isfile(args.config):
-        logging.error("Couldn't find configuration file " + args.config + '.')
+        logging.error("Couldn't find configuration file %s.", args.config)
         logging.info('Not uploading CSV to HunchLab.  Exiting.')
         sys.exit(3)
 
@@ -97,7 +97,7 @@ def main():
     certificate = server['certificateauthority']
     token = server['token']
 
-    logging.info('Uploading data to: {0}'.format(csvendpoint))
+    logging.info('Uploading data to: %s', csvendpoint)
 
     # setup session to reuse authentication and verify the SSL certificate properly
     s = requests.Session()
@@ -106,7 +106,7 @@ def main():
 
     # post the csv file to HunchLab
     if not os.path.isfile(args.csv):
-        logging.error("Couldn't find csv file " + args.csv + '.')
+        logging.error("Couldn't find csv file %s.", args.csv)
         logging.info('Not uploading CSV to HunchLab.  Exiting.')
         sys.exit(4)
 
@@ -125,27 +125,31 @@ def main():
     upload_result = csv_response.json()
     import_job_id = upload_result['import_job_id']
 
-    logging.info('Import Job ID: {0}'.format(import_job_id))
+    logging.info('Import Job ID: %d', import_job_id)
 
     # while in progress continue polling
     upload_status = s.get(csvendpoint + import_job_id)
     while upload_status.status_code == 202:
-        logging.info("Status of poll: {0}".format(upload_status.status_code))
-        logging.info('Upload Status: {0}'.format(
-            PROCESSING_STATUSES[str(upload_status.json()['processing_status'])]))
+        logging.info("Status of poll: %d", upload_status.status_code)
+        logging.info('Upload Status: %d',
+            PROCESSING_STATUSES[str(upload_status.json()['processing_status'])])
 
         _print_elapsed_time()
         time.sleep(15)
         upload_status = s.get(csvendpoint + import_job_id)
 
-    logging.info("HTTP status of poll: {0}".format(upload_status.status_code))
-    logging.info('Final Upload Status: {0}'.format(
-        PROCESSING_STATUSES[str(upload_status.json()['processing_status'])]))
+    final_status = PROCESSING_STATUSES[str(upload_status.json()['processing_status'])]
+    logging.info("HTTP status of poll: %d", upload_status.status_code)
+    logging.info('Final Upload Status: %d', final_status)
 
     logging.info('Log: ')
     logging.info(upload_status.json()['log'])
 
     _print_elapsed_time()
+
+    if final_status != 'Completed':
+        logging.error('File failed to upload successfully.')
+        sys.exit(5)
 
 
 if __name__ == "__main__":
