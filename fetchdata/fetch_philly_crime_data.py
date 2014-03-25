@@ -367,7 +367,7 @@ def main():
     logging.basicConfig(filename='fetch_philly_crime_data.log', level=logging.DEBUG,
                         format='%(asctime)s %(levelname)s: %(message)s',
                         datefmt='%Y-%m-%d %I:%M:%S %p')
-    
+
     # add logger handler for console output
     console = logging.StreamHandler()
     loglvl = getattr(logging, args.log_level.upper())
