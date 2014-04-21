@@ -42,7 +42,9 @@ class PhillyUploader():
     def __init__(self):
         """Set some variables for the data fetch."""
         self.tz = pytz.timezone(self._DATA_TIMEZONE)  # timezone of the fetched data
-        locale.setlocale(locale.LC_ALL, 'en_US.utf8')
+        
+        # use the default locale
+        locale.setlocale(locale.LC_ALL, '')
 
         self.last_updated = self.tz.localize(datetime.today())
 
@@ -339,7 +341,7 @@ class PhillyUploader():
         outln['report_time'] = loc_report_dt
         outln['address'] = row['LOCATION_BLOCK']
         outln['last_updated'] = str(self.last_updated)
-        outln['datasource'] = self._DOWNLOAD_URL
+        outln['datasource'] = 'public_csv'
 
         return outln
 
