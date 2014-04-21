@@ -42,7 +42,9 @@ class PhillyUploader():
     def __init__(self):
         """Set some variables for the data fetch."""
         self.tz = pytz.timezone(self._DATA_TIMEZONE)  # timezone of the fetched data
-        locale.setlocale(locale.LC_ALL, 'en_US.utf8')
+        
+        # use the default locale
+        locale.setlocale(locale.LC_ALL, '')
 
         self.last_updated = self.tz.localize(datetime.today())
 
