@@ -341,7 +341,7 @@ class PhillyUploader():
         outln['report_time'] = loc_report_dt
         outln['address'] = row['LOCATION_BLOCK']
         outln['last_updated'] = str(self.last_updated)
-        outln['datasource'] = self._DOWNLOAD_URL
+        outln['datasource'] = 'public_csv'
 
         return outln
 
