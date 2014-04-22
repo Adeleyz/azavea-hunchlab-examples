@@ -97,6 +97,8 @@ def main():
     certificate = server['certificateauthority']
     token = server['token']
 
+    data_attrs = _config_section_map(config, 'Data')
+
     logging.info('Uploading data to: %s', csvendpoint)
 
     # setup session to reuse authentication and verify the SSL certificate properly
@@ -104,6 +106,7 @@ def main():
     s.auth = TokenAuth(token)
     s.verify = certificate
 
+    form_data = dict(srid=data_attrs['srid'])
     # post the csv file to HunchLab
     if not os.path.isfile(args.csv):
         logging.error("Couldn't find csv file %s.", args.csv)
@@ -111,7 +114,7 @@ def main():
         sys.exit(4)
 
     with open(args.csv, 'rb') as f:
-        csv_response = s.post(csvendpoint, files={'file': f})
+        csv_response = s.post(csvendpoint, files={'file': f}, data=form_data, )
 
     if csv_response.status_code == 401:
         logging.error('Authentication token not accepted.')
