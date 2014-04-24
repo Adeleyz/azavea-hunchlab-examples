@@ -2,3 +2,6 @@
 BaseURL: https://us.hunchlab.com
 CertificateAuthority: certificates/equifaxroot.pem
 Token: YOURTOKEN
+
+[Data]
+SRID: 4326
