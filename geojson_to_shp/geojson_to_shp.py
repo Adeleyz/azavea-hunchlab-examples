@@ -41,7 +41,13 @@ class MissionsConverter(object):
     """Download missions GeoJSON from HunchLab and convert to Shapefile.
     """
     def __init__(self, server, auth_token, base_filename='missions'):
-        """Set some variables for the missions fetch/conversion."""
+        """Set some variables for the missions fetch/conversion.
+        
+        Arguments:
+            server -> URL to HunchLab server; should be in accompanying config.ini file
+            auth_token -> user's HunchLab authentication token
+            base_filename -> string to use in naming output JSON files and Shapefile directory
+        """
         self.base_filename = base_filename
         self.json_filename = self.base_filename + '.json'
         self.parsed_json = self.base_filename + '_parsed.json'
@@ -51,7 +57,9 @@ class MissionsConverter(object):
         self.sys_tz = tzlocal.get_localzone()
 
     def getMissions(self, from_dt, to_dt):
-        """Fetch missions from HunchLab.  Arguments:
+        """Fetch missions from HunchLab.
+        
+        Arguments:
            server -> HunchLab server to fetch from
            auth_token -> API token of user account that will fetch the missions
                          (also determines organization to fetch missions for)
@@ -90,11 +98,17 @@ class MissionsConverter(object):
                    'Connection': 'keep-alive'
                    }
 
-        url = '%s/api/missions/?effective_from=%s&effective_to=%s&valid_from=%s&valid_to=%s' % (
-                                                        self.server, from_dt, to_dt, from_dt, to_dt)
+        url = '%s/api/missions/' % self.server
 
+        params = {'effective_from': from_dt,
+                  'effective_to': to_dt,
+                  'valid_from': from_dt,
+                  'valid_to': to_dt
+                 }
         # if using this module on a local installation, change 'verify' to 'False'
-        stream = requests.get(url, headers=headers, stream=True, timeout=20, verify=True)
+        stream = requests.get(url, headers=headers, params=params, stream=True, timeout=20,
+                 verify=True)
+
         if stream.ok:
             with open(self.json_filename, 'wb') as stream_file:
                     for chunk in stream.iter_content():
@@ -237,6 +251,7 @@ class MissionsConverter(object):
 
 
 def _config_section_map(config, section):
+    """Helper function to extract data from config.ini file (from eventdata's importer)"""
     result = {}
     options = config.options(section)
     for option in options:
