@@ -40,14 +40,13 @@ def which(program):
 class MissionsConverter(object):
     """Download missions GeoJSON from HunchLab and convert to Shapefile.
     """
-    def __init__(self, server, auth_token, cert=None, base_filename='missions'):
+    def __init__(self, server, auth_token, base_filename='missions'):
         """Set some variables for the missions fetch/conversion."""
         self.base_filename = base_filename
         self.json_filename = self.base_filename + '.json'
         self.parsed_json = self.base_filename + '_parsed.json'
         self.auth_token = auth_token
         self.server = server
-        self.cert = cert
         # get system timezone
         self.sys_tz = tzlocal.get_localzone()
 
@@ -289,7 +288,6 @@ def main():
     config = ConfigParser.ConfigParser()
     config.read(args.config)
     server = _config_section_map(config, 'Server')
-    certificate = server['certificateauthority']
     token = server['token']
     baseurl = server['baseurl']
 
@@ -301,7 +299,7 @@ def main():
         todt = fromdt
 
     try:
-        mc = MissionsConverter(baseurl, token, certificate, args.dest_dir)
+        mc = MissionsConverter(baseurl, token, args.dest_dir)
 
         if mc.getMissions(fromdt, todt):
             # got non-zero status
