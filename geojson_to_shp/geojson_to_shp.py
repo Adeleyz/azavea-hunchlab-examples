@@ -178,13 +178,18 @@ class MissionsConverter(object):
 
             # add two columns for each event model, for label and weight;
             # number the event models by weight, descending (like they appear in map labels)
-            ev = sorted(ev, key=lambda e: e['weight'], reverse=True)
+            ev = sorted(ev, key=lambda e: e['label'])
             ev_ct = 0
             for evnt in ev:
                 ev_ct += 1
                 props['event%d' % ev_ct] = evnt['label']
                 props['evnt%d_wt' % ev_ct] = evnt['weight']
 
+            # add columns for dominant model
+            ev = sorted(ev, key=lambda e: e['weight'], reverse=True)
+            props['evnt_dom'] = ev[0]['label']
+            props['evnt_domwt'] = ev[0]['weight']
+            
             # set modified properties
             feature['properties'] = props
 
