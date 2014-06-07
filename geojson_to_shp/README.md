@@ -1,5 +1,5 @@
 # Convert Missions GeoJSON to Shapefile
-A sample script for downloading missions using the HunchLab 2.0 API and coverting to a Shapefile.
+A sample script for downloading missions using the HunchLab 2.0 API and converting to a Shapefile.
 
 ##### Use:
 1.  Install requirements
