@@ -1,6 +1,6 @@
 [Server]
 BaseURL: https://us.hunchlab.com
-CertificateAuthority: certificates/equifaxroot.pem
+CertificateAuthority: certificates/geotrust-primary-g3.pem
 Token: YOURTOKEN
 
 [Data]

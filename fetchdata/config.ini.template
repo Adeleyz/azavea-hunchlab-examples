@@ -1,4 +1,7 @@
 [Server]
 BaseURL: https://us.hunchlab.com
-CertificateAuthority: ../eventdata/certificates/equifaxroot.pem
+CertificateAuthority: ../eventdata/certificates/geotrust-primary-g3.pem
 Token: YOURTOKEN
+
+[Data]
+SRID: 4326
