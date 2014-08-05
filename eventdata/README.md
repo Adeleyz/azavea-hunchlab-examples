@@ -67,7 +67,6 @@ A sample script for uploading event data into the HunchLab 2.0 API.
 * Install Python
 * Install pip
 
-
 ### OS X & Linux: Second Steps
 * `pip install virtualenv`
 * Mount virtualenv: `source bin/activate`
@@ -75,4 +74,20 @@ A sample script for uploading event data into the HunchLab 2.0 API.
 * Verify version of openssl (`openssl version`)
 * `pip install -r requirements.txt`
 
+### Docker
 
+The `Dockerfile` in the project root creates an image that contains all of the dependencies for the uploader to function.
+
+To build the image:
+
+```
+$ docker build -t "azavea/hunchlab-examples" .
+```
+
+To run the image:
+
+```
+$ docker run -ti "azavea/hunchlab-examples" /bin/bash
+root@651942713f17:/app# cd /app
+root@651942713f17:/app# python upload.py -c config.ini data/test-2rows.csv
+```
