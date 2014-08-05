@@ -1,2 +1,9 @@
 requests==2.2.1
 tzlocal>=1.1.1
+python-dateutil==2.2
+cffi==0.8.1
+cryptography==0.3
+ndg-httpsclient==0.3.2
+pyOpenSSL==0.14
+pyasn1==0.1.7
+pyasn1-modules==0.0.5
