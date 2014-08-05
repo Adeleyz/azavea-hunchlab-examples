@@ -20,6 +20,9 @@ def which(program):
        http://stackoverflow.com/questions/377017/test-if-executable-exists-in-python
        (Version 3.3 of Python adds this functionality with shutil.which)
     """
+    if sys.platform == 'win32' and not program.endswith('.exe'):
+    	program += '.exe'
+
     def is_exe(fpath):
         return os.path.isfile(fpath) and os.access(fpath, os.X_OK)
 
