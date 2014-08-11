@@ -173,7 +173,7 @@ class PhillyUploader():
         }
 
         logging.info('Fetching recent incidents...')
-        r = requests.get(self._ARCGIS_URL, params=arcgis_params, timeout=20)
+        r = requests.get(self._ARCGIS_URL, params=arcgis_params, timeout=120)
 
         if not r.ok:
             logging.error('ArcGIS server returned status code: %d', r.status_code)
@@ -381,8 +381,9 @@ def main():
         p = PhillyUploader()
         if not p.fetch_latest(args.full_csv):
             raise Exception('Could not fetch Philadelphia incident data.')
-    except:
+    except Exception, e:
         logging.error('Did not get data for HunchLab.  Exiting.')
+        logging.exception(e)
         return  1  # data fetch either failed or didn't get anything new
 
     if not args.no_upload:
