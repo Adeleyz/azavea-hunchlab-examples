@@ -135,9 +135,9 @@ data.mission_patrol_weight_overall = sum(data$mission_patrol_weight_overall)
 
 data.percent_patrol_weight_in_missions_overall = data.mission_patrol_weight_overall / data.total_patrol_weight_overall
 
-PrintStatus(1, "Percent Event Count Caught:     ", data.percent_events_in_missions_overall)
-PrintStatus(1, "Percent Severity Weight Caught: ", data.percent_severity_in_missions_overall)
-PrintStatus(1, "Percent Patrol Weight Caught:   ", data.percent_patrol_weight_in_missions_overall)
+PrintStatus(1, "Percent Event Count Caught:     ", round(100 * data.percent_events_in_missions_overall, 2))
+PrintStatus(1, "Percent Severity Weight Caught: ", round(100 * data.percent_severity_in_missions_overall, 2))
+PrintStatus(1, "Percent Patrol Weight Caught:   ", round(100 * data.percent_patrol_weight_in_missions_overall, 2))
 
 
 
