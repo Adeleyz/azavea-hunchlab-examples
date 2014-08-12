@@ -41,7 +41,8 @@ class TokenAuth(AuthBase):
 
 
 def _print_elapsed_time():
-    logging.info('Elapsed time: {0:.1f} minutes'.format((time.time() - _START) / 60))
+    logging.info('Elapsed time: {0:.1f} minutes'\
+                 .format((time.time() - _START) / 60))
 
 
 def _config_section_map(config, section):
@@ -101,7 +102,8 @@ def main():
 
     logging.info('Uploading data to: %s', csvendpoint)
 
-    # setup session to reuse authentication and verify the SSL certificate properly
+    # setup session to reuse authentication
+    # and verify the SSL certificate properly
     s = requests.Session()
     s.auth = TokenAuth(token)
     s.verify = certificate
@@ -134,8 +136,8 @@ def main():
     upload_status = s.get(csvendpoint + import_job_id)
     while upload_status.status_code == 202:
         logging.info("Status of poll: %d", upload_status.status_code)
-        logging.info('Upload Status: %s',
-            PROCESSING_STATUSES[str(upload_status.json()['processing_status'])])
+        upload_status = PROCESSING_STATUSES[str(upload_status.json()['processing_status'])]
+        logging.info('Upload Status: %s', upload_status)
 
         _print_elapsed_time()
         time.sleep(15)

@@ -40,3 +40,6 @@ nosetests.xml
 
 # ignore temp files
 *~
+
+# ignore hunchlab upload log
+eventdata/hunchlab_upload.log
