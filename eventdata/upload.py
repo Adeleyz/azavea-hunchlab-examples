@@ -10,7 +10,7 @@ from argparse import ArgumentParser
 import ConfigParser
 ## previously was needed to inject support for more recent TLS versions
 from requests.packages.urllib3.contrib import pyopenssl
-pyopenssl.inject_into_urllib3
+pyopenssl.inject_into_urllib3()
 
 from requests.auth import AuthBase
 
