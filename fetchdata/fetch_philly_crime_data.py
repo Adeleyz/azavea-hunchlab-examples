@@ -114,7 +114,7 @@ class PhillyUploader():
             got_new_data = self.get_csv()
         else:
             # fetch json from ArcGIS for the days since the last check
-            get_days = self.since_last_check.days + 1
+            get_days = self.since_last_check.days + 15
             logging.info('Fetching incident data for the last %d days.', get_days)
             got_new_data = self.fetch_from_arcgis(get_days)
 
